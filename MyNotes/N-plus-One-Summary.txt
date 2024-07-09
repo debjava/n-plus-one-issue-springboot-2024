@@ -1,0 +1,86 @@
+
+N+1 Issue
+
+
+
+
+
+
+
+1. Eager fetching: You can use the @ManyToOne(fetch = FetchType.EAGER)
+
+2. Lazy fetching: By default, JPA uses lazy fetching for @ManyToOne associations. With lazy fetching, the associated entity is loaded only when you access the getter method for that property. If you are using Spring Data JPA, you can keep the default lazy fetching behavior and use the JOIN FETCH keyword in your query to fetch the associated entities eagerly. For example:
+@Query("SELECT b FROM Book b JOIN FETCH b.author")
+List<Book> findAllBooks();
+
+3. Entity graph: JPA provides the concept of an entity graph, which allows you to define a graph of entities to load eagerly.
+
+3.A Named Entity Graphs:
+
+Named entity graphs are defined in the entity classes using annotations and can be reused across multiple queries. Here’s an example:
+
+@Entity
+@NamedEntityGraph(
+    name = "Book.author",
+    attributeNodes = @NamedAttributeNode("author")
+)
+public class Book {
+    // ...
+}
+
+To use the named entity graph in a query, you can either annotate the repository method or use the EntityGraph annotation with the @NamedEntityGraph attribute:
+
+@Repository
+public interface BookRepository extends JpaRepository<Book, Long> {
+    @EntityGraph("Book.author")
+    List<Book> findAll();
+}
+
+
+===================
+What is N+1 Loading
+The N+1 loading problem occurs when an application makes one query to retrieve the initial data (e.g., a list of users) and then an additional query for each row of data to retrieve related data (e.g., the user’s articles) where those related data were not part of the initial data. Hence, if there are N users, the application will make 1 query to get all users and then N additional queries to get the articles for each user, totaling N+1 queries.
+
+
+Using BatchSize to Enhance N+1 Performance
+Another strategy, although not directly related to our discussions on “Fetch Boundary” is BatchSize.
+
+BatchSize basically groups your N part of the N+1 so that SQL becomes a IN query, reducing the number of total queries.
+
+select * from category where (?, ?, ? ....)
+In our example of Article -> Category let’s say you retrieve 100 articles each having its own unique category, this by default would result in 101 queries. But if you useBatchSize(size=20) defined on the Entity class, this would get reduced to 6, (100/20) + 1.
+
+@Entity
+@Data
+@BatchSize(size=20)
+public class Category {
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+}
+
+
+https://hackernoon.com/3-ways-to-deal-with-hibernate-n1-problem
+The third way is to use a sub query returning a list of author identifiers
+
+Hibernate provides this opportunity by setting @Fetch(FetchMode.SUBSELECT) on the lazy association:
+
+public class Author {
+    …
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "author")
+    @Fetch(FetchMode.SUBSELECT)
+    private Set<Book> books;
+}
+
+==========================
+By default, JPA employs lazy loading for relationships to load only the necessary data. However, lazy loading can lead to the “Could not initialize proxy – no Session” error. To prevent this error, we can use FetchType.EAGER to load the entire relationship in a single query, eliminating the need for additional database requests.
+
+or you can use the below properties in application.properties, sometimes, it is called as Antipattern.
+
+spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
+
+or
+
+@Query("SELECT c FROM COMPANY c JOIN FETCH c.employees")
+public List<Company> getAll();

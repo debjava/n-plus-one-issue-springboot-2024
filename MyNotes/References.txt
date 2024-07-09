@@ -1,0 +1,16 @@
+N+1 Problem in Spring JPA
+https://medium.com/@kiarash.shamaii/what-is-n-1-query-generate-problem-in-spring-data-jpa-and-how-to-solve-it-2f3b9f1a7a0b
+
+https://medium.com/@chikim79/ultimate-guide-to-n-1-loading-problem-in-hibernate-jpa-42e8e6cfb9f3#:~:text=The%20N%2B1%20loading%20problem,part%20of%20the%20initial%20data.
+
+https://www.baeldung.com/spring-hibernate-n1-problem
+
+https://stackoverflow.com/questions/32453989/what-is-the-solution-for-the-n1-issue-in-jpa-and-hibernate
+
+https://vladmihalcea.com/n-plus-1-query-problem/
+
+https://tech.asimio.net/2020/11/06/Preventing-N-plus-1-select-problem-using-Spring-Data-JPA-EntityGraph.html
+
+https://hackernoon.com/3-ways-to-deal-with-hibernate-n1-problem
+
+https://digma.ai/n1-query-problem-and-how-to-detect-it/

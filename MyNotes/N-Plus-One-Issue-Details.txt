@@ -1,0 +1,606 @@
+Case-1:
+@OneToMany(fetch = FetchType.LAZY, mappedBy = "author", cascade = CascadeType.ALL)
+private Set<Book> books = new HashSet<>();
+
+bookRepo.findAll()
+
+Total 3 authors, each author has 2 books
+
+Total 3+1=4 quries fired, hence N+1 issue
+
+Below are the queries.
+One query for Book, another 3 queries for Author, since there are 3 authors
+Hibernate-1: 
+    select
+        b1_0.id,
+        b1_0.author_id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0
+Hibernate-2: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Hibernate-3: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Hibernate-4: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+		
+Case-2:
+@OneToMany(fetch = FetchType.EAGER, mappedBy = "author", cascade = CascadeType.ALL)
+private Set<Book> books = new HashSet<>();
+
+bookRepo.findAll()
+
+One query for Book, another 3 queries for Author with left join, since there are 3 authors, again N+1 issue.
+
+Hibernate-1: 
+    select
+        b1_0.id,
+        b1_0.author_id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0
+Hibernate-2: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+Hibernate-3: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+Hibernate-4: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+		
+Case-3:
+@OneToMany(fetch = FetchType.EAGER, mappedBy = "author", cascade = CascadeType.ALL)
+private Set<Book> books = new HashSet<>();
+
+bookRepo.getAllBooks()
+
+In Repository Layer, it has been defined as
+@Query("select b from Book b join fetch b.author")
+public List<Book> getAllBooks();
+
+1 query from Book with join with author, 3 queries from book based upon author id, we have 3 authors, then 3 author id.
+Hence, we again get N+1 issue.
+
+Hibernate-1: 
+    select
+        b1_0.id,
+        a1_0.id,
+        a1_0.name,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0 
+    join
+        author a1_0 
+            on a1_0.id=b1_0.author_id
+Hibernate-2: 
+    select
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0 
+    where
+        b1_0.author_id=?
+Hibernate-3: 
+    select
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0 
+    where
+        b1_0.author_id=?
+Hibernate-4: 
+    select
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0 
+    where
+        b1_0.author_id=?
+
+FetchType.EAGER
+Using FetchType.EAGER either implicitly or explicitly for your JPA associations is a bad idea because you are going to fetch way more data that you need. More, the FetchType.EAGER strategy is also prone to N+1 query issues.
+
+Unfortunately, the @ManyToOne and @OneToOne associations use FetchType.EAGER by default, so if your mappings look like this:
+
+@ManyToOne
+private Post post;
+You are using the FetchType.EAGER strategy, and every time you forget to use JOIN FETCH when loading
+		
+Case-4: Solution using join fetch
+@OneToMany(fetch = FetchType.LAZY, mappedBy = "author", cascade = CascadeType.ALL)
+private Set<Book> books = new HashSet<>();
+
+bookRepo.getAllBooks()
+
+In Repository Layer, it has been defined as
+@Query("select b from Book b join fetch b.author")
+public List<Book> getAllBooks();
+
+Here, we get single query which solves, N+1 issue.
+
+Hibernate-1: 
+    select
+        b1_0.id,
+        a1_0.id,
+        a1_0.name,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0 
+    join
+        author a1_0 
+            on a1_0.id=b1_0.author_id
+
+
+
+Case-5:
+In Author class
+@OneToMany(fetch = FetchType.LAZY, mappedBy = "author", cascade = CascadeType.ALL)
+private Set<Book> books = new HashSet<>();
+
+
+In Book Class
+@ManyToOne(fetch = FetchType.EAGER)
+private Author author;
+bookRepo.findAll()
+
+In this case total 4 queries.
+Hibernate-1: 
+    select
+        b1_0.id,
+        b1_0.author_id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0
+Hibernate-2: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Hibernate-3: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Hibernate-4: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+
+Case-6:
+In Author class
+@OneToMany(fetch = FetchType.EAGER, mappedBy = "author", cascade = CascadeType.ALL)
+private Set<Book> books = new HashSet<>();
+
+
+In Book Class
+@ManyToOne(fetch = FetchType.EAGER)
+private Author author;
+bookRepo.findAll()
+
+Here aso total 4 queries are fired.
+Hibernate-1: 
+    select
+        b1_0.id,
+        b1_0.author_id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0
+Hibernate-2: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+Hibernate-3: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+Hibernate-4: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+
+Case-7: Solution using @NamedEntityGraph
+
+In Book class, it is defined as below in the class level.
+
+@NamedEntityGraph(
+	    name = "Book.author",
+	    attributeNodes = @NamedAttributeNode("author")
+	)
+public class Book {
+}
+
+In repository class, it is defined as below.
+
+@EntityGraph("Book.author")
+@Query("select b from Book b")
+public List<Book> getAllBooksUsingNamedEntityGraph();
+
+Only one query is fired.
+
+Hibernate: 
+    select
+        b1_0.id,
+        a1_0.id,
+        a1_0.name,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0 
+    left join
+        author a1_0 
+            on a1_0.id=b1_0.author_id
+			
+Case-8:
+
+Hibernate-1: 
+    select
+        b1_0.id,
+        b1_0.author_id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0
+Hibernate-2: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Hibernate-3: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Hibernate-4: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+		
+Fetch Strategy
+==============
+@OneToMany: LAZY
+@ManyToOne: EAGER
+@ManyToMany: LAZY
+@OneToOne: EAGER		
+
+Case-9: Solution using @BatchSize()
+
+The @BatchSize makes sense on both
+
+One-To-Many and
+Many-to-One as well
+
+@BatchSize makes more sense for to-many associations (e.g. @OneToMany), not for to-one relations.
+
+With batch fetching, you have (M/N + 1) database roundtrips, where M is the number of children entities in your uninitialized to-many association and N is the batch size.
+
+In the Author Class, it is defined as below.
+
+@BatchSize(size = 3)
+@OneToMany(fetch = FetchType.LAZY, mappedBy = "author", cascade = CascadeType.ALL)
+private Set<Book> books = new HashSet<>();
+
+In the Book class
+@ManyToOne(fetch = FetchType.LAZY) // Default fetch type for @ManyToOne is Eager
+private Author author;
+
+To execute the code for testing
+// Using @BatchSize()
+		bookCrudRepo.findAll().forEach(book -> {
+			System.out.println("Book: " + book);
+			Author author = book.getAuthor();
+			System.out.println("Author: " + author);
+		});
+
+Generated queries
+Hibernate: 
+    select
+        b1_0.id,
+        b1_0.author_id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Book: Book(id=202, name=Great Expectation, price=2300, author=Author(id=202, name=Charles Dickens))
+Author: Author(id=202, name=Charles Dickens)
+Book: Book(id=203, name=Oliver Twist, price=4700, author=Author(id=202, name=Charles Dickens))
+Author: Author(id=202, name=Charles Dickens)
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Book: Book(id=252, name=Romeo and Juliet, price=8000, author=Author(id=252, name=William Shakespeare))
+Author: Author(id=252, name=William Shakespeare)
+Book: Book(id=253, name=Hamlet, price=9000, author=Author(id=252, name=William Shakespeare))
+Author: Author(id=252, name=William Shakespeare)
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Book: Book(id=302, name=Paradise Lost, price=3000, author=Author(id=302, name=John Milton))
+Author: Author(id=302, name=John Milton)
+Book: Book(id=303, name=Paradise Regained, price=5000, author=Author(id=302, name=John Milton))
+Author: Author(id=302, name=John Milton)
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0 
+    where
+        a1_0.id=?
+Book: Book(id=352, name=The Cat and Shakespeare, price=5000, author=Author(id=352, name=Raja Rao))
+Author: Author(id=352, name=Raja Rao)
+Book: Book(id=353, name=Kanthapura, price=3000, author=Author(id=352, name=Raja Rao))
+Author: Author(id=352, name=Raja Rao)
+
+Case-10: Solution using Hibernate Specific @Fetch(FetchMode.SUBSELECT)
+
+In Author class, it is defined as  below.
+
+@OneToMany(fetch = FetchType.EAGER, mappedBy = "author", cascade = CascadeType.ALL)
+	@Fetch(FetchMode.SUBSELECT) // Hibernate Specific
+	private Set<Book> books = new HashSet<>();
+
+Hibernate: 
+    select
+        a1_0.id,
+        a1_0.name 
+    from
+        author a1_0
+Hibernate: 
+    select
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0 
+    where
+        b1_0.author_id in (select
+            a1_0.id 
+        from
+            author a1_0)
+
+Case-11: Using Eager Fetching
+
+In Author class
+
+@OneToMany(fetch = FetchType.EAGER, mappedBy = "author", cascade = CascadeType.ALL)
+private Set<Book> books = new HashSet<>();
+
+
+In Book Class
+
+@ManyToOne(fetch = FetchType.LAZY)
+private Author author;	
+
+// using FetchType.EAGER in Author calls and Lazy in Book sides
+		bookCrudRepo.findAll().forEach(book -> {
+			System.out.println("Book: " + book);
+			Author author = book.getAuthor();
+			System.out.println("Author: " + author);
+		});
+
+Hibernate: 
+    select
+        b1_0.id,
+        b1_0.author_id,
+        b1_0.name,
+        b1_0.price 
+    from
+        book b1_0
+Hibernate: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+Book: Book(id=202, name=Great Expectation, price=2300, author=Author(id=202, name=Charles Dickens))
+Author: Author(id=202, name=Charles Dickens)
+Book: Book(id=203, name=Oliver Twist, price=4700, author=Author(id=202, name=Charles Dickens))
+Author: Author(id=202, name=Charles Dickens)
+Hibernate: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+Book: Book(id=252, name=Romeo and Juliet, price=8000, author=Author(id=252, name=William Shakespeare))
+Author: Author(id=252, name=William Shakespeare)
+Book: Book(id=253, name=Hamlet, price=9000, author=Author(id=252, name=William Shakespeare))
+Author: Author(id=252, name=William Shakespeare)
+Hibernate: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+Book: Book(id=302, name=Paradise Lost, price=3000, author=Author(id=302, name=John Milton))
+Author: Author(id=302, name=John Milton)
+Book: Book(id=303, name=Paradise Regained, price=5000, author=Author(id=302, name=John Milton))
+Author: Author(id=302, name=John Milton)
+Hibernate: 
+    select
+        a1_0.id,
+        b1_0.author_id,
+        b1_0.id,
+        b1_0.name,
+        b1_0.price,
+        a1_0.name 
+    from
+        author a1_0 
+    left join
+        book b1_0 
+            on a1_0.id=b1_0.author_id 
+    where
+        a1_0.id=?
+Book: Book(id=352, name=The Cat and Shakespeare, price=5000, author=Author(id=352, name=Raja Rao))
+Author: Author(id=352, name=Raja Rao)
+Book: Book(id=353, name=Kanthapura, price=3000, author=Author(id=352, name=Raja Rao))
+Author: Author(id=352, name=Raja Rao)
+
+Again check FetchType.Eager - No so convinced
+
