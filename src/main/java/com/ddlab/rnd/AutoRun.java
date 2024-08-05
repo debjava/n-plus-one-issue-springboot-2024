@@ -28,33 +28,33 @@ public class AutoRun {
 //	private BookJPARepository bookJpaRepo;
 
 	private void saveAuthorAndBook() {
-//		Book book1 = new Book("Great Expectation", 2300);
-//		Book book2 = new Book("Oliver Twist", 4700);
-//		Author author1 = new Author("Charles Dickens");
-//		author1.getBooks().add(book1);
-//		author1.getBooks().add(book2);
-//		
-//		book1.setAuthor(author1);
-//		book2.setAuthor(author1);
-//		authorService.saveAuthor(author1);
+		Book book1 = new Book("Great Expectation", 2300);
+		Book book2 = new Book("Oliver Twist", 4700);
+		Author author1 = new Author("Charles Dickens");
+		author1.getBooks().add(book1);
+		author1.getBooks().add(book2);
+		
+		book1.setAuthor(author1);
+		book2.setAuthor(author1);
+		authorService.saveAuthor(author1);
 
-//		Book book3 = new Book("Hamlet", 9000);
-//		Book book4 = new Book("Romeo and Juliet", 8000);
-//		Author author2 = new Author("William Shakespeare");
-//		author2.getBooks().add(book3);
-//		author2.getBooks().add(book4);
-//		book3.setAuthor(author2);
-//		book4.setAuthor(author2);
-//		authorService.saveAuthor(author2);
+		Book book3 = new Book("Hamlet", 9000);
+		Book book4 = new Book("Romeo and Juliet", 8000);
+		Author author2 = new Author("William Shakespeare");
+		author2.getBooks().add(book3);
+		author2.getBooks().add(book4);
+		book3.setAuthor(author2);
+		book4.setAuthor(author2);
+		authorService.saveAuthor(author2);
 
-//		Book book5 = new Book("Paradise Lost", 3000);
-//		Book book6 = new Book("Paradise Regained", 5000);
-//		Author author3 = new Author("John Milton");
-//		book5.setAuthor(author3);
-//		book6.setAuthor(author3);
-//		author3.getBooks().add(book5);
-//		author3.getBooks().add(book6);
-//		authorService.saveAuthor(author3);
+		Book book5 = new Book("Paradise Lost", 3000);
+		Book book6 = new Book("Paradise Regained", 5000);
+		Author author3 = new Author("John Milton");
+		book5.setAuthor(author3);
+		book6.setAuthor(author3);
+		author3.getBooks().add(book5);
+		author3.getBooks().add(book6);
+		authorService.saveAuthor(author3);
 		
 		Book book7 = new Book("Kanthapura", 3000);
 		Book book8 = new Book("The Cat and Shakespeare", 5000);
@@ -122,6 +122,13 @@ public class AutoRun {
 //			System.out.println("Author: " + author);
 //		});
 		
+		// Only using @EntityGraph
+		bookCrudRepo.getAllBooksOnlyUsingEntityGraph().forEach(book -> {
+			System.out.println("Book: " + book);
+			Author author = book.getAuthor();
+			System.out.println("Author: " + author);
+		});
+		
 //		bookCrudRepo.getAllBooksUsingBatchSize().forEach(book -> {
 //			System.out.println("Book: " + book);
 //			Author author = book.getAuthor();
@@ -153,14 +160,14 @@ public class AutoRun {
 //		});
 		
 		// Using Plain EAGER
-		authorRepo.findAll().forEach( author -> {
-			System.out.println("--------------- START -------------");
-			System.out.println("Author: " + author);
-			author.getBooks().forEach( book -> {
-				System.out.println("Book: " + book);
-			});
-			System.out.println("_______________ END ______________");
-		});
+//		authorRepo.findAll().forEach( author -> {
+//			System.out.println("--------------- START -------------");
+//			System.out.println("Author: " + author);
+//			author.getBooks().forEach( book -> {
+//				System.out.println("Book: " + book);
+//			});
+//			System.out.println("_______________ END ______________");
+//		});
 
 	}
 

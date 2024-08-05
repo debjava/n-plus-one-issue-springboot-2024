@@ -20,5 +20,10 @@ public interface BookCrudRepository extends CrudRepository<Book, Long> {
 	@Query("select b from Book b")
 	public List<Book> getAllBooksUsingNamedEntityGraph();
 	
+	// Only using @EntityGraph
+	@EntityGraph(attributePaths = {"author"})
+	@Query("select b from Book b")
+	public List<Book> getAllBooksOnlyUsingEntityGraph();
+	
 
 }
