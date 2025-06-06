@@ -12,5 +12,5 @@ public interface AuthorService {
 	
 	List<Author> findAllAuthors();
 	
-	List<Author> getAllAuthors();
+//	List<Author> getAllAuthors();
 }

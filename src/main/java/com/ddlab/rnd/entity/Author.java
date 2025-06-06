@@ -33,11 +33,12 @@ public class Author {
 	@Column(name = "name")
 	private String name;
 
-//	@BatchSize(size = 3)
+//	@BatchSize(size = 2)
 //	@OneToMany(fetch = FetchType.LAZY, mappedBy = "author", cascade = CascadeType.ALL)
 //	@OneToMany(fetch = FetchType.EAGER, mappedBy = "author", cascade = CascadeType.ALL)
-//	@Fetch(FetchMode.SUBSELECT) // Hibernate Specific
-	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
+	@Fetch(FetchMode.SUBSELECT) // Hibernate Specific
+//	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
+	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private Set<Book> books = new HashSet<>();
 	
 	public Author() {

@@ -38,9 +38,9 @@ public class AuthorServiceImpl implements AuthorService {
 		
 	}
 	
-	@Transactional
-	@Override
-	public List<Author> getAllAuthors() {
-		return authorRepo.getAllAuthors();
-	}
+//	@Transactional
+//	@Override
+//	public List<Author> getAllAuthors() {
+//		return authorRepo.getAllAuthors();
+//	}
 }
